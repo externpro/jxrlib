@@ -25,9 +25,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 //*@@@---@@@@******************************************************************
-#ifndef ANSI
+#ifndef __ANSI__
 #define _CRT_SECURE_NO_WARNINGS
-#endif ANSI
+#endif // __ANSI__
 
 #include <stdlib.h>
 #include <string.h>
