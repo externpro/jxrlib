@@ -429,11 +429,11 @@ Int StrIOEncInit(CWMImageStrCodec* pSC)
 
     if(pSC->cNumBitIO > 0){
         size_t i;
-#if defined(_WINDOWS_) || defined(UNDER_CE)  // tmpnam does not exist in VS2005 WinCE CRT
+#if defined(_WINDOWS_) || defined(UNDER_CE)  // mkstemp/CreateWS_FileTemp does not exist
         TCHAR szPath[MAX_PATH];
         DWORD cSize, j, k;
-#endif
         char * pFilename;
+#endif
 
         pSC->ppWStream = (struct WMPStream **)malloc(pSC->cNumBitIO * sizeof(struct WMPStream *));
         if(pSC->ppWStream == NULL) return ICERR_ERROR;
@@ -453,7 +453,7 @@ Int StrIOEncInit(CWMImageStrCodec* pSC)
 
         for(i = 0; i < pSC->cNumBitIO; i ++){
             if (pSC->cmbHeight * pSC->cmbWidth * pSC->WMISCP.cChannel >= MAX_MEMORY_SIZE_IN_WORDS) {
-#if defined(_WINDOWS_) || defined(UNDER_CE)  // tmpnam does not exist in VS2005 WinCE CRT              
+#if defined(_WINDOWS_) || defined(UNDER_CE)  // mkstemp/CreateWS_FileTemp does not exist
                 Bool bUnicode = sizeof(TCHAR) == 2;
                 pSC->ppTempFile[i] = (TCHAR *)malloc(MAX_PATH * sizeof(TCHAR));
                 if(pSC->ppTempFile[i] == NULL) return ICERR_ERROR;
@@ -477,17 +477,15 @@ Int StrIOEncInit(CWMImageStrCodec* pSC)
                     }
                     pFilename[cSize] = '\0';
                 }
+                if(CreateWS_File(pSC->ppWStream + i, pFilename, "w+b") != ICERR_OK) return ICERR_ERROR;
 
 #else //DPK needs to support ANSI 
                 pSC->ppTempFile[i] = (char *)malloc(FILENAME_MAX * sizeof(char));
                 if(pSC->ppTempFile[i] == NULL) return ICERR_ERROR;
 
-                if ((pFilename = tmpnam(NULL)) == NULL)
-                    return ICERR_ERROR;                
-                strcpy(pSC->ppTempFile[i], pFilename);
+                snprintf(pSC->ppTempFile[i], L_tmpnam, "%s/tmp.XXXXXXXXXX", P_tmpdir);
+                if(CreateWS_FileTemp(pSC->ppWStream + i, pSC->ppTempFile[i], "w+b") != ICERR_OK) return ICERR_ERROR;
 #endif
-                if(CreateWS_File(pSC->ppWStream + i, pFilename, "w+b") != ICERR_OK) return ICERR_ERROR;                
-
             }
             else {
                 if(CreateWS_List(pSC->ppWStream + i) != ICERR_OK) return ICERR_ERROR;
