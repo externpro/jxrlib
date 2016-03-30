@@ -31,6 +31,10 @@
 extern "C" {
 #endif
 
+#if defined(__GNUC__) && !defined(__ANSI__)
+#define __ANSI__
+#endif
+
 #include <JXRMeta.h>
 #include <guiddef.h>
 
