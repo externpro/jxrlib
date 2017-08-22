@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.3)
 project(jxrlib)
 include(flags OPTIONAL)
-set(lib_name jxrlib)
+set(lib_name ${PROJECT_NAME})
 #######################################
 # additional include directories
 include_directories(
@@ -103,8 +103,22 @@ set(JXRTest_srcs
 source_group(JXRTest FILES ${JXRTest_srcs})
 list(APPEND ${lib_name}_libsrcs ${JXRTest_srcs})
 #######################################
+# version
+set(verString "^JXR_VERSION=+([0-9]+)\\.([0-9]+)?")
+set(verFile Makefile)
+file(STRINGS ${verFile} VER REGEX "${verString}")
+string(REGEX REPLACE "${verString}" "\\1.\\2" VER ${VER})
+if(NOT DEFINED JXR_VER)
+  set(JXR_VER ${VER})
+elseif(NOT ${JXR_VER} STREQUAL ${VER})
+  message(AUTHOR_WARNING "version passed in (${JXR_VER}) doesn't match version from ${verFile} (${VER})")
+endif()
+set(ver _${JXR_VER})
+set(verDir /${PROJECT_NAME}${ver})
+#######################################
 # library
 add_library(${lib_name} STATIC ${${lib_name}_libsrcs})
+set_target_properties(${lib_name} PROPERTIES OUTPUT_NAME ${lib_name}${ver})
 include(CheckLibraryExists)
 check_library_exists(m pow "${CMAKE_LIBRARY_PATH}" HAVE_LIBM)
 if(HAVE_LIBM)
@@ -125,10 +139,11 @@ set(lib_hdrs
   jxrgluelib/JXRGlue.h
   jxrgluelib/JXRMeta.h
   )
-install(TARGETS ${lib_name} EXPORT ${PROJECT_NAME}-targets
+set(targetsFile ${PROJECT_NAME}${ver}-targets)
+install(TARGETS ${lib_name} EXPORT ${targetsFile}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   )
-install(FILES ${lib_hdrs} DESTINATION include/jxrlib)
-install(EXPORT ${PROJECT_NAME}-targets DESTINATION lib/cmake)
+install(FILES ${lib_hdrs} DESTINATION include${verDir}/${PROJECT_NAME})
+install(EXPORT ${targetsFile} DESTINATION lib/cmake)
