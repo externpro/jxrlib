@@ -3,23 +3,6 @@ project(jxrlib)
 include(flags OPTIONAL)
 set(lib_name ${PROJECT_NAME})
 #######################################
-# additional include directories
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/common/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/image/sys
-  ${CMAKE_CURRENT_SOURCE_DIR}/jxrgluelib
-  ${CMAKE_CURRENT_SOURCE_DIR}/jxrtestlib
-  )
-#######################################
-# preprocessor
-add_definitions(-DDISABLE_PERF_MEASUREMENT)
-if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-  add_definitions(-D__ANSI__)
-endif()
-#######################################
-# library sources
-###################
-# JXRCommon
 set(JXRCommon_srcs
   image/sys/adapthuff.c
   image/sys/ansi.h
@@ -38,7 +21,6 @@ set(JXRCommon_srcs
 source_group(JXRCommon FILES ${JXRCommon_srcs})
 list(APPEND ${lib_name}_libsrcs ${JXRCommon_srcs})
 ###################
-# JXRDecode
 set(JXRDecode_srcs
   image/decode/decode.c
   image/decode/decode.h
@@ -53,7 +35,6 @@ set(JXRDecode_srcs
 source_group(JXRDecode FILES ${JXRDecode_srcs})
 list(APPEND ${lib_name}_libsrcs ${JXRDecode_srcs})
 ###################
-# JXREncode
 set(JXREncode_srcs
   image/encode/encode.c
   image/encode/encode.h
@@ -66,7 +47,6 @@ set(JXREncode_srcs
 source_group(JXREncode FILES ${JXREncode_srcs})
 list(APPEND ${lib_name}_libsrcs ${JXREncode_srcs})
 ###################
-# Include
 set(Include_srcs
   common/include/guiddef.h
   common/include/wmsal.h
@@ -78,7 +58,6 @@ set(Include_srcs
 source_group(Include FILES ${Include_srcs})
 list(APPEND ${lib_name}_libsrcs ${Include_srcs})
 ###################
-# JXRGlue
 set(JXRGlue_srcs
   jxrgluelib/JXRGlue.c
   jxrgluelib/JXRGlue.h
@@ -90,7 +69,6 @@ set(JXRGlue_srcs
 source_group(JXRGlue FILES ${JXRGlue_srcs})
 list(APPEND ${lib_name}_libsrcs ${JXRGlue_srcs})
 ###################
-# JXRTest
 set(JXRTest_srcs
   jxrtestlib/JXRTest.c
   jxrtestlib/JXRTest.h
@@ -103,7 +81,6 @@ set(JXRTest_srcs
 source_group(JXRTest FILES ${JXRTest_srcs})
 list(APPEND ${lib_name}_libsrcs ${JXRTest_srcs})
 #######################################
-# version
 set(verString "^JXR_VERSION=+([0-9]+)\\.([0-9]+)?")
 set(verFile Makefile)
 file(STRINGS ${verFile} VER REGEX "${verString}")
@@ -116,23 +93,30 @@ endif()
 set(ver _${JXR_VER})
 set(verDir /${PROJECT_NAME}${ver})
 #######################################
-# library
 add_library(${lib_name} STATIC ${${lib_name}_libsrcs})
+target_include_directories(${lib_name} PUBLIC $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include${verDir}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/jxrtestlib>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/jxrgluelib>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/image/sys>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/common/include>
+  )
+target_compile_definitions(${lib_name} PRIVATE -DDISABLE_PERF_MEASUREMENT)
+if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+  target_compile_definitions(${lib_name} PRIVATE -D__ANSI__)
+endif()
 set_target_properties(${lib_name} PROPERTIES OUTPUT_NAME ${lib_name}${ver})
 include(CheckLibraryExists)
 check_library_exists(m pow "${CMAKE_LIBRARY_PATH}" HAVE_LIBM)
 if(HAVE_LIBM)
-  target_link_libraries(${lib_name} m)
+  target_link_libraries(${lib_name} PRIVATE m)
 endif()
 #######################################
-# executables
 set(exes JXRDec420 JxrDecApp JxrEnc420 JxrEncApp)
 foreach(exe ${exes})
   add_executable(${exe} jxrencoderdecoder/${exe}.c)
-  target_link_libraries(${exe} ${lib_name})
+  target_link_libraries(${exe} PRIVATE ${lib_name})
 endforeach()
 #######################################
-# install
 set(lib_hdrs
   "${Include_srcs}"
   image/sys/windowsmediaphoto.h
@@ -146,4 +130,7 @@ install(TARGETS ${lib_name} EXPORT ${targetsFile}
   ARCHIVE DESTINATION lib
   )
 install(FILES ${lib_hdrs} DESTINATION include${verDir}/${PROJECT_NAME})
-install(EXPORT ${targetsFile} DESTINATION lib/cmake)
+if(DEFINED XP_NAMESPACE)
+  set(nameSpace NAMESPACE ${XP_NAMESPACE}::)
+endif()
+install(EXPORT ${targetsFile} DESTINATION lib/cmake ${nameSpace})
