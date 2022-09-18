@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.3)
 project(jxrlib)
+include(GNUInstallDirs)
 include(flags OPTIONAL)
 set(lib_name ${PROJECT_NAME})
 #######################################
@@ -82,19 +83,11 @@ source_group(JXRTest FILES ${JXRTest_srcs})
 list(APPEND ${lib_name}_libsrcs ${JXRTest_srcs})
 #######################################
 set(verString "^JXR_VERSION=+([0-9]+)\\.([0-9]+)?")
-set(verFile Makefile)
-file(STRINGS ${verFile} VER REGEX "${verString}")
+file(STRINGS Makefile VER REGEX "${verString}")
 string(REGEX REPLACE "${verString}" "\\1.\\2" VER ${VER})
-if(NOT DEFINED JXR_VER)
-  set(JXR_VER ${VER})
-elseif(NOT ${JXR_VER} STREQUAL ${VER})
-  message(AUTHOR_WARNING "version passed in (${JXR_VER}) doesn't match version from ${verFile} (${VER})")
-endif()
-set(ver _${JXR_VER})
-set(verDir /${PROJECT_NAME}${ver})
 #######################################
 add_library(${lib_name} STATIC ${${lib_name}_libsrcs})
-target_include_directories(${lib_name} PUBLIC $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include${verDir}>
+target_include_directories(${lib_name} PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/jxrtestlib>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/jxrgluelib>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/image/sys>
@@ -104,7 +97,6 @@ target_compile_definitions(${lib_name} PRIVATE -DDISABLE_PERF_MEASUREMENT)
 if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
   target_compile_definitions(${lib_name} PRIVATE -D__ANSI__)
 endif()
-set_target_properties(${lib_name} PROPERTIES OUTPUT_NAME ${lib_name}${ver})
 include(CheckLibraryExists)
 check_library_exists(m pow "${CMAKE_LIBRARY_PATH}" HAVE_LIBM)
 if(HAVE_LIBM)
@@ -123,14 +115,17 @@ set(lib_hdrs
   jxrgluelib/JXRGlue.h
   jxrgluelib/JXRMeta.h
   )
-set(targetsFile ${PROJECT_NAME}${ver}-targets)
+set(targetsFile ${PROJECT_NAME}-targets)
 install(TARGETS ${lib_name} EXPORT ${targetsFile}
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   )
-install(FILES ${lib_hdrs} DESTINATION include${verDir}/${PROJECT_NAME})
+install(FILES ${lib_hdrs} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 if(DEFINED XP_NAMESPACE)
   set(nameSpace NAMESPACE ${XP_NAMESPACE}::)
 endif()
-install(EXPORT ${targetsFile} DESTINATION lib/cmake ${nameSpace})
+if(NOT DEFINED XP_INSTALL_CMAKEDIR)
+  set(XP_INSTALL_CMAKEDIR ${CMAKE_INSTALL_DATADIR}/cmake)
+endif()
+install(EXPORT ${targetsFile} DESTINATION ${XP_INSTALL_CMAKEDIR} ${nameSpace})
