@@ -509,6 +509,10 @@ ERR WMPAlloc(void** ppv, size_t cb);
 ERR WMPFree(void** ppv);
 
 //================================================================
+ERR CreateWS_File(struct WMPStream** ppWS, const char* szFilename, const char* szMode);
+ERR CreateWS_FileTemp(struct WMPStream** ppWS, char* szFilename, const char* szMode);
+
+//================================================================
 Void initMRPtr(CWMImageStrCodec*);
 Void advanceMRPtr(CWMImageStrCodec*);
 Void swapMRPtr(CWMImageStrCodec*);
