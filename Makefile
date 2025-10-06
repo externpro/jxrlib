@@ -31,7 +31,7 @@ build: all
 
 CC=cc
 
-JXR_VERSION=15.08
+JXR_VERSION=v2019.10.9
 
 DIR_SRC=$(CURDIR)
 DIR_SYS=image/sys

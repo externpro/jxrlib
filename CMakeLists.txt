@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.31)
+set(CMAKE_PROJECT_TOP_LEVEL_INCLUDES .devcontainer/cmake/xproinc.cmake)
 project(jxrlib)
 include(GNUInstallDirs)
 include(xpflags)
@@ -82,9 +83,10 @@ set(JXRTest_srcs
 source_group(JXRTest FILES ${JXRTest_srcs})
 list(APPEND ${lib_name}_libsrcs ${JXRTest_srcs})
 #######################################
-set(verString "^JXR_VERSION=+([0-9]+)\\.([0-9]+)?")
-file(STRINGS Makefile VER REGEX "${verString}")
-string(REGEX REPLACE "${verString}" "\\1.\\2" VER ${VER})
+# Extract version from Makefile
+file(STRINGS Makefile VER REGEX "^JXR_VERSION=")
+# Remove the optional prefix and keep just the version numbers
+string(REGEX REPLACE "^JXR_VERSION=v?" "" VER ${VER})
 #######################################
 add_library(${lib_name} STATIC ${${lib_name}_libsrcs})
 target_include_directories(${lib_name} PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
@@ -115,17 +117,20 @@ set(lib_hdrs
   jxrgluelib/JXRGlue.h
   jxrgluelib/JXRMeta.h
   )
+set(lib ${lib_name})
+if(DEFINED XP_NAMESPACE)
+  set(nameSpace NAMESPACE ${XP_NAMESPACE}::)
+  string(PREPEND lib "${XP_NAMESPACE}::")
+endif()
+if(NOT DEFINED XP_INSTALL_CMAKEDIR)
+  set(XP_INSTALL_CMAKEDIR ${CMAKE_INSTALL_DATADIR}/cmake)
+endif()
 set(targetsFile ${PROJECT_NAME}-targets)
+xpPackageDevel(TARGETS_FILE ${targetsFile} LIBRARIES ${lib})
 install(TARGETS ${lib_name} EXPORT ${targetsFile}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   )
 install(FILES ${lib_hdrs} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
-if(DEFINED XP_NAMESPACE)
-  set(nameSpace NAMESPACE ${XP_NAMESPACE}::)
-endif()
-if(NOT DEFINED XP_INSTALL_CMAKEDIR)
-  set(XP_INSTALL_CMAKEDIR ${CMAKE_INSTALL_DATADIR}/cmake)
-endif()
 install(EXPORT ${targetsFile} DESTINATION ${XP_INSTALL_CMAKEDIR} ${nameSpace})

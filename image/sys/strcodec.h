@@ -85,6 +85,36 @@ typedef unsigned __int64 U64;
 #endif // PLATFORM_ANSI
 
 //================================================================
+// Byte swapping functions
+//================================================================
+#ifndef _BYTESWAP_ULONG_DEFINED
+#define _BYTESWAP_ULONG_DEFINED
+
+#if (defined(WIN32) && !defined(UNDER_CE)) || (defined(UNDER_CE) && defined(_ARM_))
+// WinCE ARM and Desktop x86 - use built-in function
+#elif defined(_MSC_VER)
+// Other Microsoft platforms - use intrinsic
+#include <stdlib.h>
+#else
+// other platforms
+#ifdef _BIG__ENDIAN_
+#define _byteswap_ulong(x)  (x)
+#else // _BIG__ENDIAN_
+static inline U32 _byteswap_ulong(U32 bits)
+{
+    U32 r = (bits & 0xffu) << 24;
+    r |= (bits << 8) & 0xff0000u;
+    r |= ((bits >> 8) & 0xff00u);
+    r |= ((bits >> 24) & 0xffu);
+
+    return r;
+}
+#endif // _BIG__ENDIAN_
+#endif
+
+#endif // _BYTESWAP_ULONG_DEFINED
+
+//================================================================
 #define MARKERCOUNT (PACKETLENGTH * 2)
 
 // The following macros depend on UINTPTR_T and INTPTR_T being properly defined
@@ -477,6 +507,10 @@ typedef struct CWMImageStrCodec {
 //================================================================
 ERR WMPAlloc(void** ppv, size_t cb);
 ERR WMPFree(void** ppv);
+
+//================================================================
+ERR CreateWS_File(struct WMPStream** ppWS, const char* szFilename, const char* szMode);
+ERR CreateWS_FileTemp(struct WMPStream** ppWS, char* szFilename, const char* szMode);
 
 //================================================================
 Void initMRPtr(CWMImageStrCodec*);
