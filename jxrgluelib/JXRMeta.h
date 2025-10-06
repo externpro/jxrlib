@@ -27,9 +27,9 @@
 //*@@@---@@@@******************************************************************
 #pragma once
 
-#include <windowsmediaphoto.h>
+#include "windowsmediaphoto.h"
 #ifndef WIN32
-#include <wmspecstring.h>
+#include "wmspecstring.h"
 #endif
 
 #ifndef UNREFERENCED_PARAMETER
