@@ -82,9 +82,10 @@ set(JXRTest_srcs
 source_group(JXRTest FILES ${JXRTest_srcs})
 list(APPEND ${lib_name}_libsrcs ${JXRTest_srcs})
 #######################################
-set(verString "^JXR_VERSION=+([0-9]+)\\.([0-9]+)?")
-file(STRINGS Makefile VER REGEX "${verString}")
-string(REGEX REPLACE "${verString}" "\\1.\\2" VER ${VER})
+# Extract version from Makefile
+file(STRINGS Makefile VER REGEX "^JXR_VERSION=")
+# Remove the optional prefix and keep just the version numbers
+string(REGEX REPLACE "^JXR_VERSION=v?" "" VER ${VER})
 #######################################
 add_library(${lib_name} STATIC ${${lib_name}_libsrcs})
 target_include_directories(${lib_name} PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
