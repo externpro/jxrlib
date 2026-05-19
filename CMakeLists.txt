@@ -1,5 +1,4 @@
-cmake_minimum_required(VERSION 3.31)
-set(CMAKE_PROJECT_TOP_LEVEL_INCLUDES .devcontainer/cmake/xproinc.cmake)
+cmake_minimum_required(VERSION 4.3)
 project(jxrlib)
 set(lib_name ${PROJECT_NAME})
 #######################################
@@ -116,15 +115,14 @@ set(lib_hdrs
   jxrgluelib/JXRMeta.h
   )
 set(targetsFile ${PROJECT_NAME}-targets)
-if(DEFINED XP_NAMESPACE)
-  xpExternPackage(NAMESPACE ${XP_NAMESPACE}
-    TARGETS_FILE ${targetsFile} LIBRARIES ${lib_name}
+if(COMMAND xpExternPackage)
+  xpExternPackage(TARGETS_FILE ${targetsFile}
+    LIBRARIES ${lib_name} DEFAULT_TARGETS ${lib_name}
     BASE v2019.10.9 XPDIFF "intro"
     WEB "https://github.com/4creators/jxrlib" UPSTREAM "github.com/4creators/jxrlib"
     DESC "JPEG XR Image Codec reference implementation library released by Microsoft"
     LICENSE "[BSD-2-Clause](https://github.com/4creators/jxrlib/blob/master/LICENSE 'BSD 2-Clause Simplified License')"
     )
-  set(nameSpace NAMESPACE ${XP_NAMESPACE}::)
 elseif(NOT DEFINED CMAKE_INSTALL_CMAKEDIR)
   set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_DATADIR}/cmake)
 endif()
@@ -134,4 +132,4 @@ install(TARGETS ${lib_name} EXPORT ${targetsFile}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   )
 install(FILES ${lib_hdrs} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
-install(EXPORT ${targetsFile} DESTINATION ${CMAKE_INSTALL_CMAKEDIR} ${nameSpace})
+install(EXPORT ${targetsFile} DESTINATION ${CMAKE_INSTALL_CMAKEDIR} NAMESPACE ${PROJECT_NAME}::)
